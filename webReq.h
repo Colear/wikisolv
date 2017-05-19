@@ -30,4 +30,12 @@
 Liens * getLiensWiki (char* sujet);
 
 
+// ----- getResGoogle ----------
+
+// Retourne le nombre de résultats d'une recherche combinée entre un
+// lien et le sujet de départ.
+
+long getResGoogle (char* lien, char* depart);
+
+
 #endif // REQWEB_H_

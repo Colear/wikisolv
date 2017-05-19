@@ -45,5 +45,8 @@ int main ( int argc, char *argv[]) {
 		liste = liste->suivant;
 	}
 
+	printf ("test de la requête Google\n");
+	printf ("nombre de résultats pour Ours et Choucroute = %d\n", getResGoogle ("Ours", "Choucroute")); 
+	
 	printf ("fin du main\n");
 	}

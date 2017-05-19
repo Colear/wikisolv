@@ -66,6 +66,7 @@ int ajouteDansListe (Liens * liste, char * nvLien, long pertinence) {
 	}
 
 
+
 // ----- creeListe ----------
 
 // Crée une liste vide destinée à contenir l'ensemble des liens wiki d'une page
