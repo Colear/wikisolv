@@ -77,11 +77,37 @@ static size_t curlCallback(void* ptr, size_t size, size_t nmemb, void* data)
 
 
 
+// ----- remplaceCar ----------
+
+// Remplace toutes les occurences d'un caractère dans une chaine.
+// Retourne le nombre d'occurence trouvées / remplacées.
+// Attention : cette fonction ne marche qu'avec des vraies variables chaines !!!
+//             lancer remplaceChar ("ma chaine", 'a', 'o') retournera une
+//             erreur de segmentation car les chaines littérales sont en read only !
+
+int remplaceChar (char * chaine, char carOld, char carNew) {
+
+	int nbOcc =0;
+	char * positionAct;
+
+    positionAct = strchr (chaine, carOld);
+	 
+    while (positionAct){
+        * positionAct = carNew;
+		positionAct++;
+        positionAct = strchr ( positionAct, carOld);
+		nbOcc++;
+    	} 
+
+    return nbOcc;
+	}
+
+
 
 // ========== fonctions publiques ============================================================
 
 
-// ----- getLiens Wiki ----------
+// ----- getLiensWiki ----------
 
 // Retourne une liste de tous les liens wiki d'une page Wikipedia
 // Les liens fournis sont juste les sujets, et décodés (par exemple
@@ -89,7 +115,55 @@ static size_t curlCallback(void* ptr, size_t size, size_t nmemb, void* data)
 
 Liens * getLiensWiki (char* sujet) {
 
-	printf ("coucou de getLiensWiki\n");
+  	CURL *curl;
+  	CURLcode codeRet;
+	char * URL;
+  	struct Buffer page;
+  	Liens * liens;
+
+	// initialisation
+  	page.buffer = NULL;
+  	page.size = 0;
+	liens = creeListeWiki();
+
+	// création de l'URL
+	// attention : dans la chaine sujet il faut remplacer les blancs par des "-" !
+	remplaceChar (sujet, ' ', '-');
+    URL = (char *) malloc (strlen ("https://fr.wikipedia.org/wiki/") + strlen (sujet) + 1);
+	strcpy (URL, "https://fr.wikipedia.org/wiki/");
+	strcpy (URL + strlen("https://fr.wikipedia.org/wiki/"), sujet);
+	URL [strlen("https://fr.wikipedia.org/wiki/") + strlen (sujet) + 1] = 0;
+    printf ("URL = %s\n", URL);
+
+	// initialisation de CURL
+  	curl = curl_easy_init();
+  	if(curl) {
+
+    	curl_easy_setopt(curl, CURLOPT_URL, URL);
+    	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlCallback);
+    	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&page);
+
+    	// exécution de la requête
+    	codeRet = curl_easy_perform(curl);
+
+    	// contrôle des erreurs ...
+    	if (codeRet != CURLE_OK) {
+      		fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(codeRet));
+      		return NULL;
+      		}
+
+    	// ... et si tout va bien on récupère les données
+    	else {
+
+      		printf ("plus qu'à faire les traitements, page = %s\n", page.buffer);
+    		}
+
+    	// toujours nettoyer !
+    	curl_easy_cleanup(curl);
+
+    	} // if ... curl
+
+    return liens;
 	}
 
 
@@ -108,10 +182,10 @@ long getResGoogle (char* lien, char* depart) {
     char * debut; char * fin; char * reste;
     char temp [512]; char result [512];
 	int i; int j;
-    int nbResults; 
+    int nbResults = -1; 							// -1 si le curl_easy_init echoue
 
     // création de l'URL
-    URL = (char *) malloc (strlen ("https://www.google.fr/search?q=") + strlen (depart) + 1 + strlen (lien) + 1);
+	URL = (char *) malloc (strlen ("https://www.google.fr/search?q=") + strlen (depart) + 1 + strlen (lien) + 1);
 	mkURL = URL;
     strcpy (mkURL, "https://www.google.fr/search?q=");
 	mkURL += strlen ("https://www.google.fr/search?q=");
@@ -133,63 +207,65 @@ long getResGoogle (char* lien, char* depart) {
         curl_easy_setopt(curl, CURLOPT_URL, URL);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&page);
-    	}
 
-    // exécution de la requête
-    codeRet = curl_easy_perform(curl);
+    	// exécution de la requête
+    	codeRet = curl_easy_perform(curl);
 
-    // contrôle des erreurs ...
-    if(codeRet != CURLE_OK) {
-    	fprintf (stderr, "Erreur dans la requête Google : %s\n", curl_easy_strerror(codeRet));
-      	return 1;
-      	}
+    	// contrôle des erreurs ...
+    	if(codeRet != CURLE_OK) {
+    		fprintf (stderr, "Erreur dans la requête Google : %s\n", curl_easy_strerror(codeRet));
+      		return 1;
+      		}
 
 
-    // ... et si tout va bien on récupère les données
-    else {
+    	// ... et si tout va bien on récupère les données
+    	else {
 
-		// on recherche l'id resultStats
-		 debut = strstr (page.buffer, "id=\"resultStats\"");
+			// on recherche l'id resultStats
+		 	debut = strstr (page.buffer, "id=\"resultStats\"");
 
-		// si pas trouvé sortie avec un message d'erreur
-        if (debut == NULL) {
-			fprintf (stderr, "Erreur sur les résultats Google !");
-			nbResults = -1;
-			}
+			// si pas trouvé sortie avec un message d'erreur
+        	if (debut == NULL) {
+				fprintf (stderr, "Erreur sur les résultats Google !");
+				nbResults = -1;
+				}
 
-		// sinon il faut maintenant isoler juste les chiffres
-        else {
-            debut += 17;
-            fin = strstr (debut, "</div>");
+			// sinon il faut maintenant isoler juste les chiffres
+        	else {
+            	debut += 17;
+            	fin = strstr (debut, "</div>");
 
-			// copie dans un buffer de la zone contenant l'info
-            strncpy (temp, debut, fin - debut);
-            temp [ fin - debut] = 0;
+				// copie dans un buffer de la zone contenant l'info
+            	strncpy (temp, debut, fin - debut);
+            	temp [ fin - debut] = 0;
 
-			// on se positionne au début du nombre
-            i = 0; j = 0;
-            while (! isdigit(temp [i])) i++ ;
+				// on se positionne au début du nombre
+            	i = 0; j = 0;
+            	while (! isdigit(temp [i])) i++ ;
 
-            // tant qu'on ne récupère pas le "r" de résultat on est sur le nombre
-            while ( temp[i] != 'r') {
+            	// tant qu'on ne récupère pas le "r" de résultat on est sur le nombre
+            	while ( temp[i] != 'r') {
 
-				// si on est sur un caractère & on incrément jusqu'au ;
-                if (temp[i] == '&') {
-					while (temp[i++] != ';');
-                    }
+					// si on est sur un caractère & on incrément jusqu'au ;
+                	if (temp[i] == '&') {
+						while (temp[i++] != ';');
+                    	}
 
 					// on stocke le chiffre
                     result[j++] = temp[i++];
-                }
+                	}
 			
-			// ca y est on a le resultat sous forme de chaine, reste à le convertir en entier
-            result[j] = 0;
-            nbResults = strtol (result, &reste, 10);
-            }
-    	}
+				// ca y est on a le resultat sous forme de chaine, reste à le convertir en entier
+            	result[j] = 0;
+            	nbResults = strtol (result, &reste, 10);
+            	}
 
-    // toujours nettoyer !
-    curl_easy_cleanup(curl);
+    		} // else ... récuperation des données
+
+    	// toujours nettoyer !
+    	curl_easy_cleanup(curl);
+
+		} // if ... curl 
 
     return nbResults;
 	}

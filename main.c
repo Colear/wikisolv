@@ -31,19 +31,20 @@
 
 int main ( int argc, char *argv[]) {
 
+	char sujet[] = "Nogent le rotrou";
+
 	printf ("début du main\n");
 	
-	printf ("test des fonctions de liste\n");
+	Liens * liste;
 
-	Liens * liste = creeListeWiki();
-	ajouteDansListe (liste, "truc", 1);
-	ajouteDansListe (liste, "bidule", 0);
-	ajouteDansListe (liste, "machin", 100);
-	
-	while (liste != NULL) {
-		printf ("liens : %s, pondération = %d\n", liste->lien, liste->pertinence);
-		liste = liste->suivant;
-	}
+	liste = getLiensWiki (sujet);
+
+	if (liste->lien != NULL) {	
+		while (liste != NULL) {
+			printf ("liens : %s, pondération = %d\n", liste->lien, liste->pertinence);
+			liste = liste->suivant;
+			}
+		}
 
 	printf ("test de la requête Google\n");
 	printf ("nombre de résultats pour Ours et Choucroute = %d\n", getResGoogle ("Ours", "Choucroute")); 
