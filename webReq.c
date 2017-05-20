@@ -119,12 +119,16 @@ Liens * getLiensWiki (char* sujet) {
   	CURLcode codeRet;
 	char * URL;
   	struct Buffer page;
-  	Liens * liens;
+	char * debut; char * fin; char * finLien;
+	char buffer[512]; 
+	char * decode;
+	int found;
+  	Liens * liens; Liens * firstLien;
 
 	// initialisation
   	page.buffer = NULL;
   	page.size = 0;
-	liens = creeListeWiki();
+	firstLien = creeListeWiki();
 
 	// création de l'URL
 	// attention : dans la chaine sujet il faut remplacer les blancs par des "-" !
@@ -155,15 +159,56 @@ Liens * getLiensWiki (char* sujet) {
     	// ... et si tout va bien on récupère les données
     	else {
 
-      		printf ("plus qu'à faire les traitements, page = %s\n", page.buffer);
-    		}
+			// on encadre la zone où les liens sont significatifs 	
+			debut = strstr ( page.buffer , "<h1 id=\"firstHeading\" class=\"firstHeading\"");
+    		fin   = strstr ( page.buffer , "<div class=\"printfooter\">");
+
+			// on met un zero terminal au niveau de page fin (pour limiter les fonctions
+			// de chaine à la zone debut -> fin
+			*fin = 0;
+
+			// on boucle tant qu'on trouve des occurences de lien
+    		while ( (debut = strstr (debut,  "<a href=\"/wiki/")) != NULL ) {
+
+                // on avance un peu pour supprimer la balise, le href et le "/wiki/"
+                debut += strlen ("<a href=\"/wiki/");
+
+                // la fin du lien est marquée par une guillement double
+                finLien = strchr (debut, '"');
+
+                // on copie le lien dans le buffer (nb de car entre debut et finLien, moins 1  pour ne pas avoir le ")
+                memcpy(buffer, debut, finLien - debut);
+                buffer[finLien - debut] = 0;
+
+				// on transforme l'UTF8
+				decode = curl_easy_unescape(curl, buffer, 0, NULL);
+				
+				// on vérifie que le lien n'existe pas déja dans la liste
+        		found = 0;
+        		liens = firstLien;
+        		do {
+            		if (liens->lien != NULL && ! strcmp(liens->lien, decode)) {
+                		found = 1;
+                		break;
+            			}
+            		liens = liens->suivant;
+        			} while (liens != NULL);
+
+     			// si le lien n'existe pas ET si le lien ne contient pas de ':' (catégorie, ...)
+        		// on crée une nouveau membre dans la liste
+        		if (! found && strchr (buffer, ':') == NULL) {
+					ajouteDansListe (firstLien, decode, 0);
+					}
+
+				} // while ... lien trouvé
+    		} // else ... on récupère les données
 
     	// toujours nettoyer !
     	curl_easy_cleanup(curl);
 
     	} // if ... curl
 
-    return liens;
+    return firstLien;
 	}
 
 
