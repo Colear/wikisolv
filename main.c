@@ -37,6 +37,10 @@ typedef int bool;
 // ========== fonctions ======================================================================
 
 
+// ----- asciiArtTitre ----------
+
+// Affiche un magnifique titre !
+
 void asciiArtTitre (void) {
 
 	// affiche le titre de l'interface en Ascii Art (c'est pas beau ça ?) !
@@ -51,19 +55,88 @@ void asciiArtTitre (void) {
 	}
 
 
+// ----- clearInputBuffer ----------
 
-void setParam ( char * param ) {
+// Cette fonction permet de vider le buffer d'entrée clavier. C'est nécessaire car un appel à getchar ()
+// stocke le caractère choisi mais aussi un retour chariot. Du coup le prochain appel à getchar ()
+// utilise ce retour chariot, sans attente d'entrée utilisateur.
+//
+// Attention : n'apppeler que si il y a eu un appel getchar ou scanf préalable !
 
-	char choix;
+void clearInputBuffer (void) {
+
+	char c;
+
+	do 
+    	{
+        c = getchar();
+    	} while (c != '\n' && c != EOF);
+	}
+
+
+
+// ----- setParamChaine ----------
+
+// Positionne un paramètre de type chaîne
+
+void setParamChaine ( const char * description, char * param ) {
+
+	char buffer[512];
+	int res;
 
 	CLEARSCR;
 
+	printf ("\n\n");
 	asciiArtTitre();
+	printf ("\n\n");
 
-	choix = getchar();
+	// récupération de la valeur
+	printf ("		%s : ", description);
+	res = scanf ("%511[0-9a-zA-Z ]", buffer);
+	
+	// recopie de la saisie (si conforme) dans le paramètre
+	if (res == 1) {
+		param = realloc (param, strlen (buffer + 1));
+		strcpy (param, buffer);
+		}
+
+	// nettoyage du buffer d'entrée
+	clearInputBuffer ();
 	}
 
+
  
+// ----- setParamNum ----------
+
+// Positionne un paramètre de type numérique (entier)
+
+void setParamNum ( const char * description, int  * param ) {
+
+    int res;
+	char buffer[512];
+ 
+    CLEARSCR;
+
+    printf ("\n\n");
+    asciiArtTitre();
+    printf ("\n\n");
+
+    // récupération de la valeur
+    printf ("       %s : ", description);
+    res = scanf ("%d", buffer);
+
+	printf ("%s\n", buffer);
+
+    // nettoyage du buffer d'entrée
+    clearInputBuffer ();
+	getchar();
+    }
+
+
+
+// ----- usage ----------
+
+// Affichae l'aide en cas d'erreur dans les arguments de lancement du programme
 
 void usage ( char * programme ) {
 
@@ -121,11 +194,13 @@ void interface ( char * start, char * end, bool google) {
 		// saisie du choix 
 		printf ("\n\n		Votre choix ? ");
 		choix = getchar (); 
+		clearInputBuffer ();
 		printf ("\n");
 
 		// positionnement d'un paramètre
-		if (choix == 's') setParam ( depart );
-		if (choix == 'c') setParam ( cible );
+		if (choix == 's') setParamChaine ( "Sujet de départ", depart );
+		if (choix == 'c') setParamChaine ( "Sujet cible", cible );
+		if (choix == 'g') setParamNum ("Utilisation de la résolution google (o/n)", &useGoogle);
 		}
 
 	while (choix != 'q');
