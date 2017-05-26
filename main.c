@@ -231,7 +231,7 @@ void interface ( char * start, char * end, bool google) {
 		if (choix == 's') setParamChaine ( "Sujet de départ", depart );
 		if (choix == 'c') setParamChaine ( "Sujet cible", cible );
 		if (choix == 'g') setParamBool ("Utilisation de la résolution google (o/n)", &useGoogle);
-		if (choix == 'l') {
+		if (choix == 'l' && strlen (depart) && strlen (cible)) {
 			CLEARSCR;
 			lanceResolution (depart, cible, useGoogle);
 			printf ("\n\n	Une touche pour continuer ... ");

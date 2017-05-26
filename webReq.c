@@ -132,7 +132,7 @@ Liens * getLiensWiki (char* sujet) {
 
 	// création de l'URL
 	// attention : dans la chaine sujet il faut remplacer les blancs par des "-" !
-	remplaceChar (sujet, ' ', '-');
+	remplaceChar (sujet, ' ', '_');
     URL = (char *) malloc (strlen ("https://fr.wikipedia.org/wiki/") + strlen (sujet) + 1);
 	strcpy (URL, "https://fr.wikipedia.org/wiki/");
 	strcpy (URL + strlen("https://fr.wikipedia.org/wiki/"), sujet);
