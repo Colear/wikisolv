@@ -136,8 +136,6 @@ Liens * getLiensWiki (char* sujet) {
     URL = (char *) malloc (strlen ("https://fr.wikipedia.org/wiki/") + strlen (sujet) + 1);
 	strcpy (URL, "https://fr.wikipedia.org/wiki/");
 	strcpy (URL + strlen("https://fr.wikipedia.org/wiki/"), sujet);
-	URL [strlen("https://fr.wikipedia.org/wiki/") + strlen (sujet) + 1] = 0;
-    printf ("URL = %s\n", URL);
 
 	// initialisation de CURL
   	curl = curl_easy_init();
@@ -159,6 +157,9 @@ Liens * getLiensWiki (char* sujet) {
     	// ... et si tout va bien on récupère les données
     	else {
 
+			// si la taille est nulle, il y a eu redirection (=> le sujet proposé n'est pas un sujet Wiki !)
+			if (! page.size) return NULL;
+			
 			// on encadre la zone où les liens sont significatifs 	
 			debut = strstr ( page.buffer , "<h1 id=\"firstHeading\" class=\"firstHeading\"");
     		fin   = strstr ( page.buffer , "<div class=\"printfooter\">");

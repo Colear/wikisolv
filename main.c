@@ -18,6 +18,7 @@
 
 #include "webReq.h"
 #include "tree.h"
+#include "game.h"
 
 
 // ----- defines ----------
@@ -72,6 +73,33 @@ void clearInputBuffer (void) {
         c = getchar();
     	} while (c != '\n' && c != EOF);
 	}
+
+
+
+// ----- setParamBool ----------
+
+// Positionne un paramètre de type booléen (0 ou 1)
+
+void setParamBool ( const char * description, int  * param ) {
+
+	char choix;
+ 
+    CLEARSCR;
+
+    printf ("\n\n");
+    asciiArtTitre();
+    printf ("\n\n");
+
+    // récupération de la valeur
+    printf ("       %s : ", description);
+	choix = getchar (); 
+
+	if (choix == 'o' || choix == 'y' || choix == 'O' || choix == 'Y') * param = 1;
+	else * param = 0;
+
+    // nettoyage du buffer d'entrée
+    clearInputBuffer ();
+    }
 
 
 
@@ -136,7 +164,7 @@ void setParamNum ( const char * description, int  * param ) {
 
 // ----- usage ----------
 
-// Affichae l'aide en cas d'erreur dans les arguments de lancement du programme
+// Affiche l'aide en cas d'erreur dans les arguments de lancement du programme
 
 void usage ( char * programme ) {
 
@@ -188,6 +216,8 @@ void interface ( char * start, char * end, bool google) {
 		printf ("		c) Sujet cible :                            %s\n", cible);
 		printf ("\n		g) Utilisation de la résolution Google :    ");
 		if (useGoogle) printf ("oui\n"); else printf ("non\n");
+		if (strlen (depart) && strlen (cible))
+			printf("\n		l) Lancement de la résolution\n");
 		printf ("\n\n");
 		printf ("		q) Quitter\n");
 	
@@ -200,7 +230,14 @@ void interface ( char * start, char * end, bool google) {
 		// positionnement d'un paramètre
 		if (choix == 's') setParamChaine ( "Sujet de départ", depart );
 		if (choix == 'c') setParamChaine ( "Sujet cible", cible );
-		if (choix == 'g') setParamNum ("Utilisation de la résolution google (o/n)", &useGoogle);
+		if (choix == 'g') setParamBool ("Utilisation de la résolution google (o/n)", &useGoogle);
+		if (choix == 'l') {
+			CLEARSCR;
+			printf ("%d		", lanceResolution (depart, cible, useGoogle));
+			printf ("\n\n	Une touche pour continuer ... ");
+			getchar ();
+			clearInputBuffer ();
+			}
 		}
 
 	while (choix != 'q');
