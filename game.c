@@ -60,23 +60,47 @@ bool cibleInLiens (char * cible, Liens * liens) {
 
 int lanceResolution (char * depart, char * cible, int useGoogle) {
 
-	Liens * liens;
+	Liens * arbre = creeListeWiki ();
+	Liens * scan; 
+	Liens * end;
+
 	char * examen = malloc (strlen (depart) + 1);
-	char * path = malloc (strlen (depart) + 1);
 	int bonds = 1;
 
-	strcpy (examen, depart);
-	strcpy (path, depart);
+	arbre->lien = malloc (strlen (depart) + 1);
+	strcpy (arbre->lien, depart);
+	arbre->suivant = NULL;
+	arbre->precedent = NULL;
 
-	// while (1) {
-	
-		liens = getLiensWiki (examen);
+	end = arbre;
 
-		if (liens == NULL) return -1;
+	while (bonds < 100) {
+
+		// infos
+		printf ("exament du sujet %s\n", arbre->lien);
+
+		// pointeur sur la fin de liste
+		while (end->suivant != NULL) end = end->suivant;
+
+		// on récupére la liste des liens fils du lien courant
+		scan = getLiensWiki (arbre->lien);
+			
+		// on vérifie qu'on ait pas résolu le problème
+		if (cibleInLiens (cible, scan)) {
+			printf ("Cible %s trouvée comme fils de %s\n", cible, arbre->lien);
+			return bonds;
+			}
 	
-		if (cibleInLiens (cible, liens)) printf ("trouvé !!!");
-		else printf ("pas trouvé !"); 	
-	getchar();
+		// on les ajoute en fin de liste 
+		end->suivant = scan;
+		scan->precedent = end;
+
+		// passage au noeud suivant
+		arbre = arbre->suivant;
+		
+		bonds++;
+		}
+
 	return 0;
 	}
 

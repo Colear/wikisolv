@@ -233,7 +233,7 @@ void interface ( char * start, char * end, bool google) {
 		if (choix == 'g') setParamBool ("Utilisation de la résolution google (o/n)", &useGoogle);
 		if (choix == 'l') {
 			CLEARSCR;
-			printf ("%d		", lanceResolution (depart, cible, useGoogle));
+			lanceResolution (depart, cible, useGoogle);
 			printf ("\n\n	Une touche pour continuer ... ");
 			getchar ();
 			clearInputBuffer ();
